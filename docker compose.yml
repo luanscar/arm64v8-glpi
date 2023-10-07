@@ -1,0 +1,63 @@
+version: '3.8'
+
+services:
+  app:
+    image: luanscar/arm64v8-glpi:latest
+    restart: unless-stopped
+    depends_on:
+      - mariadb
+    volumes:
+      - glpi_data:/var/www/suporte/
+    ports:
+      - 8080:80
+    deploy:
+      replicas: 1
+      placement:
+        constraints:
+          - node.role == manager
+      resources:
+        limits:
+          cpus: "0.1"
+          memory: 256M
+    networks:
+      - public
+      - glpi_public
+      
+  # MariaDB Service
+  mariadb:
+    image: mariadb:10.11
+    environment:
+      MYSQL_ROOT_PASSWORD: your_password
+    volumes:
+      - mysql:/var/lib/mysql
+      - mysql_log:/var/log/mysql
+    networks:
+      - public
+      - glpi_public
+
+  # phpMyAdmin Service
+  phpmyadmin:
+    image: arm64v8/phpmyadmin
+    ports:
+      - 8081:80
+    environment:
+      PMA_HOST: mariadb
+    depends_on:
+      - mariadb
+    networks:
+      - public
+      - glpi_public
+
+volumes:
+  glpi_data:
+    external: true
+  mysql:
+    external: true
+  mysql_log:
+    external: true
+    
+networks:
+  glpi_public:
+    external: true  
+  public:
+    external: true
